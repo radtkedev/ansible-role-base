@@ -1,0 +1,22 @@
+---
+- name: Restart ssh service for Debian
+  ansible.builtin.systemd:
+    name: ssh
+    state: restarted
+
+- name: Restart ssh service for RedHat
+  ansible.builtin.systemd:
+    name: sshd
+    state: restarted
+
+- name: Restart chronyd service
+  ansible.builtin.systemd:
+    name: chronyd
+    enabled: true
+    state: restarted
+
+- name: Restart systemd-timesyncd service
+  ansible.builtin.systemd:
+    name: systemd-timesyncd
+    enabled: true
+    state: restarted

@@ -1,0 +1,202 @@
+---
+- name: SSH - Set up keys (1/2)
+  ansible.builtin.file:
+    mode: "0700"
+    path: "{{ ssh_dir }}/.ssh"
+    state: directory
+
+- name: SSH - Set up ssh keys (2/2)
+  ansible.builtin.copy:
+    mode: "0600"
+    dest: "{{ ssh_dir }}/.ssh/authorized_keys"
+    content: "{{ ssh_keys }}"
+
+- name: SSH - Configuration
+  notify: "Restart ssh service for {{ ansible_os_family }}"
+  ansible.builtin.lineinfile:
+    dest: /etc/ssh/sshd_config
+    regexp: "{{ item.regexp }}"
+    line: "{{ item.line }}"
+    state: present
+    validate: /usr/sbin/sshd -T -f %s
+  with_items:
+    - regexp: "^PermitRootLogin"
+      line: "PermitRootLogin {{ ssh_permitrootlogin }}"
+    - regexp: "^PasswordAuthentication"
+      line: "PasswordAuthentication {{ ssh_passwordauthentication }}"
+    - regexp: "^ChallengeResponseAuthentication"
+      line: "ChallengeResponseAuthentication {{ ssh_challengeresponseauthentication }}"
+    - regexp: "^PrintMotd"
+      line: "PrintMotd {{ ssh_printmotd }}"
+    - regexp: "^PrintLastLog"
+      line: "PrintLastLog {{ ssh_printlastlog }}"
+
+- name: Packages - Update apt cache
+  when: ansible_os_family == 'Debian'
+  ansible.builtin.apt:
+    update_cache: true
+
+- name: Packages - Update dnf cache
+  when: ansible_os_family == 'RedHat'
+  ansible.builtin.dnf:
+    update_cache: true
+
+- name: Packages - Upgrade all packages
+  ansible.builtin.package:
+    name: "*"
+    state: latest
+
+- name: Packages - Install base packages
+  ansible.builtin.package:
+    name: "{{ packages }}"
+    state: present
+
+- name: Packages - Install systemd-timesyncd
+  when:
+    - ntp_configure
+    - ansible_os_family == 'Debian'
+  ansible.builtin.package:
+    name: systemd-timesyncd
+    state: present
+
+- name: NTP - Debian Configuration
+  notify: "Restart systemd-timesyncd service"
+  when:
+    - ntp_configure
+    - ansible_os_family == 'Debian'
+  ansible.builtin.lineinfile:
+    dest: /etc/systemd/timesyncd.conf
+    regexp: "^NTP"
+    line: "NTP={{ ntp_servers | join(' ') }}"
+
+- name: NTP - Install chrony for RedHat
+  when:
+    - ntp_configure
+    - ansible_os_family == 'RedHat'
+  ansible.builtin.package:
+    name: chrony
+    state: present
+
+- name: NTP - Configuration for RedHat
+  notify: "Restart chronyd service"
+  when:
+    - ntp_configure
+    - ansible_os_family == 'RedHat'
+  ansible.builtin.template:
+    src: chrony.conf.j2
+    dest: /etc/chrony.conf
+
+- name: Bootloader - Reduce timeout
+  register: grub
+  ansible.builtin.lineinfile:
+    path: /etc/default/grub
+    regexp: "^GRUB_TIMEOUT="
+    line: "GRUB_TIMEOUT={{ grub_timeout }}"
+
+- name: Bootloader - Check firmware type
+  register: uefi
+  ansible.builtin.stat:
+    path: /sys/firmware/efi
+
+- name: Bootloader - Update BIOS GRUB for RedHat
+  when:
+    - grub.changed and not uefi.stat.exists
+    - ansible_os_family == 'RedHat'
+  ansible.builtin.command: grub2-mkconfig -o /boot/grub2/grub.cfg
+
+- name: Bootloader - Update UEFI GRUB for RedHat
+  when:
+    - grub.changed and uefi.stat.exists
+    - ansible_os_family == 'RedHat'
+  ansible.builtin.command: grub2-mkconfig -o /boot/efi/EFI/*/grub.cfg
+
+- name: Bootloader - Update GRUB for Debian
+  when: ansible_os_family == 'Debian'
+  ansible.builtin.command: update-grub
+
+- name: SELinux - Configuration
+  when: ansible_os_family == 'RedHat'
+  ansible.posix.selinux:
+    policy: "{{ selinux_policy }}"
+    state: "{{ selinux_state }}"
+
+- name: Autoupdate - Install unattended-upgrades for Debian
+  when:
+    - autoupdate_enabled
+    - ansible_os_family == 'Debian'
+  ansible.builtin.package:
+    name: unattended-upgrades
+    state: present
+
+- name: Autoupdate - Configuration for Debian (1/2)
+  when:
+    - autoupdate_enabled
+    - ansible_os_family == 'Debian'
+  ansible.builtin.template:
+    src: "{{ item }}.j2"
+    dest: "/etc/apt/apt.conf.d/{{ item }}"
+  with_items:
+    - 10periodic
+    - 50unattended-upgrades
+
+- name: Autoupdate - Install dnf-automatic for RedHat
+  when:
+    - autoupdate_enabled
+    - ansible_os_family == 'RedHat'
+  ansible.builtin.package:
+    name: dnf-automatic
+    state: present
+
+- name: Autoupdate - Configuration for RedHat (1/2)
+  when:
+    - autoupdate_enabled
+    - ansible_os_family == 'RedHat'
+  community.general.files.ini_file:
+    path: /etc/dnf/automatic.conf
+    section: commands
+    option: upgrade_type
+    value: "security"
+
+- name: Autoupdate - Configuration for RedHat (2/2)
+  when:
+    - autoupdate_enabled
+    - ansible_os_family == 'RedHat'
+  ansible.builtin.systemd:
+    name: dnf-automatic-install.timer
+    state: started
+    enabled: true
+
+- name: Swap - Check for swapfile
+  when: swapfile_enabled
+  ansible.builtin.stat:
+    path: /swapfile
+  register: swap
+
+- name: Swap - Reserve space (1/5)
+  ansible.builtin.command: "fallocate -l {{ swapfile_size }} /swapfile"
+  when: not swap.stat.exists and swapfile_enabled
+
+- name: Swap - Set permissions (2/5)
+  ansible.builtin.file:
+    dest: /swapfile
+    mode: 0600
+  when: not swap.stat.exists and swapfile_enabled
+
+- name: Swap - Create swapfile (3/5)
+  ansible.builtin.command: mkswap /swapfile
+  when: not swap.stat.exists and swapfile_enabled
+
+- name: Swap - Enable swapfile (4/5)
+  ansible.builtin.command: swapon /swapfile
+  when: not swap.stat.exists and swapfile_enabled
+
+- name: Swap - Mount swapfile (5/5)
+  ansible.posix.mount:
+    src: /swapfile
+    name: "none"
+    fstype: "swap"
+    opts: "sw,nofail"
+    dump: "0"
+    passno: "0"
+    state: present
+  when: not swap.stat.exists and swapfile_enabled

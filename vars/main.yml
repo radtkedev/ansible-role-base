@@ -1,0 +1,25 @@
+---
+packages:
+  - net-tools
+  - vim
+  - zip
+  - unzip
+ssh_dir: "/root"
+ssh_keys:
+  - ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDPiflDGONaY4ppQqOWh9tlo6bDwY5BfRqWcHyAv/dev
+ssh_permitrootlogin: "prohibit-password"
+ssh_passwordauthentication: "no"
+ssh_challengeresponseauthentication: "no"
+ssh_printmotd: "no"
+ssh_printlastlog: "no"
+ntp_configure: "true"
+ntp_servers:
+  - time.cloudflare.com
+selinux_policy: "targeted"
+selinux_state: "enforcing"
+swapfile_enabled: "true"
+swapfile_size: "2G"
+autoupdate_enabled: "true"
+autoupdate_debian_reboot: "false"
+autoupdate_debian_reboot_time: "03:00"
+grub_timeout: "1"

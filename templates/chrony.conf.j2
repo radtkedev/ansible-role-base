@@ -1,0 +1,9 @@
+{% for server in ntp_servers %}
+server {{ server }}
+{% endfor %}
+driftfile /var/lib/chrony/drift
+makestep 1.0 3
+rtcsync
+keyfile /etc/chrony.keys
+leapsectz right/UTC
+logdir /var/log/chrony
