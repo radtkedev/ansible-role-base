@@ -5,7 +5,23 @@
 A role for configuring common server settings on Debian and RHEL-based systems.
 
 ## Usage
-To be completed.
+After installing Ansible and Git on your desktop, clone the repository using `git clone https://github.com/radtkedev/ansible-role-base` and configure the variables in vars/main.yml. After that, create a playbook.yml file (one directory above the cloned one) with the following contents:
+```
+---
+- hosts: all
+  roles:
+    - ansible-role-base
+```
+
+Use the following to run the playbook via root on the machine 192.168.0.100.
+```
+ansible-playbook -u root -i 192.168.0.100, playbook.yml
+```
+
+Alternatively this, should you be using a simple user account with sudo priviliges. If you use passwordless sudo, remove the `-K` option.
+```
+ansible-playbook -bK -u someusername -i 192.168.0.100, playbook.yml
+```
 
 ## Tasks
 - Update system and install basic packages
