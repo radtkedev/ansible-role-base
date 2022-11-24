@@ -5,7 +5,7 @@
 A role for configuring common server settings on Debian and RHEL-based systems.
 
 ## Usage
-After installing Ansible and Git on your desktop, clone the repository using `git clone https://github.com/radtkedev/ansible-role-base` and configure the variables in vars/main.yml. After that, create a playbook.yml file (one directory above the cloned one) with the following contents:
+Install Git and Ansible on your machine, clone the repository using `git clone https://github.com/radtkedev/ansible-role-base` and configure the variables in vars/main.yml. After that, create a playbook.yml file (one directory above the cloned one) with the following contents:
 ```
 ---
 - hosts: all
