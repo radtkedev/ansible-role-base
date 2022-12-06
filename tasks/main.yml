@@ -9,7 +9,7 @@
   ansible.builtin.copy:
     mode: "0600"
     dest: "{{ ssh_dir }}/.ssh/authorized_keys"
-    content: "{{ ssh_keys }}"
+    content: "{{ ssh_keys | join('\n') }}\n"
 
 - name: SSH - Configuration
   notify: "Restart ssh service for {{ ansible_os_family }}"
