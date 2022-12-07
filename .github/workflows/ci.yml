@@ -21,8 +21,8 @@ jobs:
         with:
           python-version: '3.x'
 
-      - name: Configure yamllint
-        run: pip3 install yamllint
+      - name: Configure ansible-lint
+        run: pip3 install ansible-lint
 
-      - name: Run yamllint
-        run: yamllint .
+      - name: Run ansible-lint
+        run: ansible-lint .
