@@ -200,3 +200,8 @@
     passno: "0"
     state: present
   when: not swap.stat.exists and swapfile_enabled
+
+- name: Install Docker
+  when: docker_configure
+  include_tasks:
+    file: docker.yml

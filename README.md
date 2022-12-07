@@ -31,6 +31,7 @@ ansible-playbook -bK -u someusername -i 192.168.0.100, playbook.yml
 - NTP time servers specified (chronyd or systemd-timesyncd)
 - Configure SELinux
 - Create swapfile
+- Install Docker
 
 ## Configuration
 Variables for configuration are provided in vars/main.yml.
@@ -89,4 +90,9 @@ autoupdate_debian_reboot_time: "03:00"
 To allow boot menu selection while not extending the boot time by 5 seconds, the role configures the timeout to 1s by default
 ```
 grub_timeout: "1"
+```
+
+Install the docker repository and package
+```
+docker_configure: "true"
 ```
