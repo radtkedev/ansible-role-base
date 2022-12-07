@@ -1,70 +1,70 @@
 ---
-  - name: Uninstall podman on RedHat
-    when: ansible_os_family == 'RedHat'
-    ansible.builtin.dnf:
-      name:
-        - podman
-        - runc
-      state: absent
+- name: Uninstall podman on RedHat
+  when: ansible_os_family == 'RedHat'
+  ansible.builtin.dnf:
+    name:
+      - podman
+      - runc
+    state: absent
 
-  - name: Install requirements for adding repositories on Debian
-    when: ansible_os_family == 'Debian'
-    ansible.builtin.apt:
-      name:
-        - ca-certificates
-        - curl
-        - gnupg2
-        - lsb-release
+- name: Install requirements for adding repositories on Debian
+  when: ansible_os_family == 'Debian'
+  ansible.builtin.apt:
+    name:
+      - ca-certificates
+      - curl
+      - gnupg2
+      - lsb-release
 
-  - name: Add docker gpg key on RedHat
-    when: ansible_os_family == 'RedHat'
-    ansible.builtin.rpm_key:
-      key: "https://download.docker.com/linux/centos/gpg"
-      state: present
+- name: Add docker gpg key on RedHat
+  when: ansible_os_family == 'RedHat'
+  ansible.builtin.rpm_key:
+    key: "https://download.docker.com/linux/centos/gpg"
+    state: present
 
-  - name: add docker gpg key on Debian
-    when: ansible_os_family == 'Debian'
-    ansible.builtin.apt_key:
-      url: https://download.docker.com/linux/debian/gpg
-      state: present
+- name: Add docker gpg key on Debian
+  when: ansible_os_family == 'Debian'
+  ansible.builtin.apt_key:
+    url: https://download.docker.com/linux/debian/gpg
+    state: present
 
-  - name: Add repository on RedHat
-    when: ansible_os_family == 'RedHat'
-    ansible.builtin.yum_repository:
-      name: docker
-      description: docker
-      baseurl: "https://download.docker.com/linux/centos/$releasever/$basearch/stable"
-      enabled: true
-      gpgcheck: true
-      gpgkey: "https://download.docker.com/linux/centos/gpg"
+- name: Add repository on RedHat
+  when: ansible_os_family == 'RedHat'
+  ansible.builtin.yum_repository:
+    name: docker
+    description: docker
+    baseurl: "https://download.docker.com/linux/centos/$releasever/$basearch/stable"
+    enabled: true
+    gpgcheck: true
+    gpgkey: "https://download.docker.com/linux/centos/gpg"
 
-  - name: Add repository on Debian
-    when: ansible_os_family == 'Debian'
-    ansible.builtin.apt_repository:
-      repo: "deb [arch=amd64] https://download.docker.com/linux/debian {{ ansible_distribution_release }} stable"
-      state: present
+- name: Add repository on Debian
+  when: ansible_os_family == 'Debian'
+  ansible.builtin.apt_repository:
+    repo: "deb [arch=amd64] https://download.docker.com/linux/debian {{ ansible_distribution_release }} stable"
+    state: present
 
-  - name: Update apt cache on Debian
-    when: ansible_os_family == 'Debian'
-    ansible.builtin.apt:
-      update_cache: true
+- name: Update apt cache on Debian
+  when: ansible_os_family == 'Debian'
+  ansible.builtin.apt:
+    update_cache: true
 
-  - name: Update dnf cache on RedHat
-    when: ansible_os_family == 'RedHat'
-    ansible.builtin.dnf:
-      update_cache: true
+- name: Update dnf cache on RedHat
+  when: ansible_os_family == 'RedHat'
+  ansible.builtin.dnf:
+    update_cache: true
 
-  - name: Install Docker
-    ansible.builtin.package:
-      name:
-        - docker-ce
-        - docker-ce-cli
-        - containerd.io
-        - docker-compose-plugin
-      state: latest
+- name: Install Docker
+  ansible.builtin.package:
+    name:
+      - docker-ce
+      - docker-ce-cli
+      - containerd.io
+      - docker-compose-plugin
+    state: latest
 
-  - name: Start Docker
-    ansible.builtin.service:
-      name: "docker"
-      enabled: true
-      state: started
+- name: Start Docker
+  ansible.builtin.service:
+    name: "docker"
+    enabled: true
+    state: started
