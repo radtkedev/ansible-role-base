@@ -85,6 +85,7 @@
   ansible.builtin.template:
     src: chrony.conf.j2
     dest: /etc/chrony.conf
+    mode: "0644"
 
 - name: Bootloader - Reduce timeout
   register: grub
@@ -135,6 +136,7 @@
   ansible.builtin.template:
     src: "{{ item }}.j2"
     dest: "/etc/apt/apt.conf.d/{{ item }}"
+    mode: "0664"
   with_items:
     - 10periodic
     - 50unattended-upgrades
@@ -203,5 +205,5 @@
 
 - name: Install Docker
   when: docker_configure
-  include_tasks:
+  ansible.builtin.include_tasks:
     file: docker.yml
