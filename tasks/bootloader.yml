@@ -1,0 +1,21 @@
+---
+- name: Bootloader - Check firmware type
+  register: uefi
+  ansible.builtin.stat:
+    path: /sys/firmware/efi
+
+- name: Bootloader - Update BIOS GRUB for RedHat
+  when:
+    - grub.changed and not uefi.stat.exists
+    - ansible_os_family == 'RedHat'
+  ansible.builtin.command: grub2-mkconfig -o /boot/grub2/grub.cfg
+
+- name: Bootloader - Update UEFI GRUB for RedHat
+  when:
+    - grub.changed and uefi.stat.exists
+    - ansible_os_family == 'RedHat'
+  ansible.builtin.command: grub2-mkconfig -o /boot/efi/EFI/*/grub.cfg
+
+- name: Bootloader - Update GRUB for Debian
+  when: ansible_os_family == 'Debian'
+  ansible.builtin.command: update-grub

@@ -1,0 +1,32 @@
+---
+- name: SSH - Set up keys (1/2)
+  ansible.builtin.file:
+    mode: "0700"
+    path: "{{ ssh_dir }}/.ssh"
+    state: directory
+
+- name: SSH - Set up ssh keys (2/2)
+  ansible.builtin.copy:
+    mode: "0600"
+    dest: "{{ ssh_dir }}/.ssh/authorized_keys"
+    content: "{{ ssh_keys | join('\n') }}\n"
+
+- name: SSH - Configuration
+  notify: "Restart ssh service for {{ ansible_os_family }}"
+  ansible.builtin.lineinfile:
+    dest: /etc/ssh/sshd_config
+    regexp: "{{ item.regexp }}"
+    line: "{{ item.line }}"
+    state: present
+    validate: /usr/sbin/sshd -T -f %s
+  with_items:
+    - regexp: "^PermitRootLogin"
+      line: "PermitRootLogin {{ ssh_permitrootlogin }}"
+    - regexp: "^PasswordAuthentication"
+      line: "PasswordAuthentication {{ ssh_passwordauthentication }}"
+    - regexp: "^ChallengeResponseAuthentication"
+      line: "ChallengeResponseAuthentication {{ ssh_challengeresponseauthentication }}"
+    - regexp: "^PrintMotd"
+      line: "PrintMotd {{ ssh_printmotd }}"
+    - regexp: "^PrintLastLog"
+      line: "PrintLastLog {{ ssh_printlastlog }}"

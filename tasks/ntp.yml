@@ -1,0 +1,36 @@
+---
+- name: Packages - Install systemd-timesyncd
+  when:
+    - ntp_configure
+    - ansible_os_family == 'Debian'
+  ansible.builtin.package:
+    name: systemd-timesyncd
+    state: present
+
+- name: NTP - Debian Configuration
+  notify: "Restart systemd-timesyncd service"
+  when:
+    - ntp_configure
+    - ansible_os_family == 'Debian'
+  ansible.builtin.lineinfile:
+    dest: /etc/systemd/timesyncd.conf
+    regexp: "^NTP"
+    line: "NTP={{ ntp_servers | join(' ') }}"
+
+- name: NTP - Install chrony for RedHat
+  when:
+    - ntp_configure
+    - ansible_os_family == 'RedHat'
+  ansible.builtin.package:
+    name: chrony
+    state: present
+
+- name: NTP - Configuration for RedHat
+  notify: "Restart chronyd service"
+  when:
+    - ntp_configure
+    - ansible_os_family == 'RedHat'
+  ansible.builtin.template:
+    src: chrony.conf.j2
+    dest: /etc/chrony.conf
+    mode: "0644"

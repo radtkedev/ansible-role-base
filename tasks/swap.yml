@@ -1,0 +1,35 @@
+---
+- name: Swap - Check for swapfile
+  when: swapfile_enabled
+  ansible.builtin.stat:
+    path: /swapfile
+  register: swap
+
+- name: Swap - Reserve space (1/5)
+  ansible.builtin.command: "fallocate -l {{ swapfile_size }} /swapfile"
+  when: not swap.stat.exists and swapfile_enabled
+
+- name: Swap - Set permissions (2/5)
+  ansible.builtin.file:
+    dest: /swapfile
+    mode: 0600
+  when: not swap.stat.exists and swapfile_enabled
+
+- name: Swap - Create swapfile (3/5)
+  ansible.builtin.command: mkswap /swapfile
+  when: not swap.stat.exists and swapfile_enabled
+
+- name: Swap - Enable swapfile (4/5)
+  ansible.builtin.command: swapon /swapfile
+  when: not swap.stat.exists and swapfile_enabled
+
+- name: Swap - Mount swapfile (5/5)
+  ansible.posix.mount:
+    src: /swapfile
+    name: "none"
+    fstype: "swap"
+    opts: "sw,nofail"
+    dump: "0"
+    passno: "0"
+    state: present
+  when: not swap.stat.exists and swapfile_enabled
