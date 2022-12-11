@@ -10,7 +10,7 @@
     state: absent
 
 - name: Install requirements for adding repositories on Debian
-  when: 
+  when:
     - ansible_os_family == 'Debian'
     - docker_configure
   ansible.builtin.apt:
