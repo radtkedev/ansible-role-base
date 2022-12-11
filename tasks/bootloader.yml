@@ -1,4 +1,11 @@
 ---
+- name: Bootloader - Reduce timeout
+  register: grub
+  ansible.builtin.lineinfile:
+    path: /etc/default/grub
+    regexp: "^GRUB_TIMEOUT="
+    line: "GRUB_TIMEOUT={{ grub_timeout }}"
+
 - name: Bootloader - Check firmware type
   register: uefi
   ansible.builtin.stat:
