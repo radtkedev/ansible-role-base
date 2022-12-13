@@ -40,6 +40,11 @@
   ansible.builtin.include_tasks:
     file: docker.yml
 
+- name: Configure tailscale
+  when: tailscale_configure
+  ansible.builtin.include_tasks:
+    file: tailscale.yml
+
 - name: SELinux - Configuration
   when: ansible_os_family == 'RedHat'
   ansible.posix.selinux:

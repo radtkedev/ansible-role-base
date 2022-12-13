@@ -1,0 +1,77 @@
+---
+- name: Add tailscale gpg key on RedHat
+  when: ansible_os_family == 'RedHat'
+  ansible.builtin.rpm_key:
+    key: "https://pkgs.tailscale.com/stable/rhel/{{ ansible_distribution_major_version }}/repo.gpg"
+    state: present
+
+- name: Add tailscale gpg key on Debian
+  when: ansible_os_family == 'Debian'
+  ansible.builtin.apt_key:
+    url: https://pkgs.tailscale.com/stable/debian/{{ ansible_distribution_release }}.noarmor.gpg
+    state: present
+
+- name: Add repository on RedHat
+  when: ansible_os_family == 'RedHat'
+  ansible.builtin.yum_repository:
+    name: tailscale
+    description: tailscale
+    baseurl: "https://pkgs.tailscale.com/stable/rhel/$releasever/$basearch"
+    enabled: true
+    repo_gpgcheck: true
+    gpgcheck: false
+    gpgkey: "https://pkgs.tailscale.com/stable/rhel/$releasever/repo.gpg"
+
+- name: Add repository on Debian
+  when: ansible_os_family == 'Debian'
+  ansible.builtin.apt_repository:
+    repo: "deb https://pkgs.tailscale.com/stable/debian {{ ansible_distribution_release }} main"
+    state: present
+
+- name: Update apt cache on Debian
+  when: ansible_os_family == 'Debian'
+  ansible.builtin.apt:
+    update_cache: true
+
+- name: Update dnf cache on RedHat
+  when: ansible_os_family == 'RedHat'
+  ansible.builtin.dnf:
+    update_cache: true
+
+- name: Install tailscale
+  ansible.builtin.package:
+    name: tailscale
+    state: present
+
+- name: Start tailscale service
+  ansible.builtin.service:
+    name: tailscaled
+    enabled: true
+    state: started
+
+- name: Check auth status (1/3)
+  ansible.builtin.set_fact:
+    auth_required: false
+
+- name: Check auth status (2/3)
+  ansible.builtin.command: "tailscale status --json"
+  register: _status
+  changed_when: false
+
+- name: Check auth status (3/3)
+  when: _fields.BackendState == "NeedsLogin"
+  ansible.builtin.set_fact:
+    auth_required: true
+  vars:
+    _fields: "{{ _status.stdout | from_json }}"
+
+- name: Get authkey
+  when: auth_required
+  register: authkey
+  ansible.builtin.pause:
+    prompt: "Enter Tailscale authorization key"
+    echo: true
+
+- name: Start tailscale with authkey
+  when: auth_required
+  ansible.builtin.command: "tailscale up --authkey {{ authkey.user_input }}"
