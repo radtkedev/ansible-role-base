@@ -1,8 +1,6 @@
 ---
 - name: Uninstall podman on RedHat
-  when:
-    - ansible_os_family == 'RedHat'
-    - docker_configure
+  when: ansible_os_family == 'RedHat'
   ansible.builtin.dnf:
     name:
       - podman
@@ -10,9 +8,7 @@
     state: absent
 
 - name: Install requirements for adding repositories on Debian
-  when:
-    - ansible_os_family == 'Debian'
-    - docker_configure
+  when: ansible_os_family == 'Debian'
   ansible.builtin.apt:
     name:
       - ca-certificates
@@ -21,25 +17,19 @@
       - lsb-release
 
 - name: Add docker gpg key on RedHat
-  when:
-    - ansible_os_family == 'RedHat'
-    - docker_configure
+  when: ansible_os_family == 'RedHat'
   ansible.builtin.rpm_key:
     key: "https://download.docker.com/linux/centos/gpg"
     state: present
 
 - name: Add docker gpg key on Debian
-  when:
-    - ansible_os_family == 'Debian'
-    - docker_configure
+  when: ansible_os_family == 'Debian'
   ansible.builtin.apt_key:
     url: https://download.docker.com/linux/debian/gpg
     state: present
 
 - name: Add repository on RedHat
-  when:
-    - ansible_os_family == 'RedHat'
-    - docker_configure
+  when: ansible_os_family == 'RedHat'
   ansible.builtin.yum_repository:
     name: docker
     description: docker
@@ -49,29 +39,22 @@
     gpgkey: "https://download.docker.com/linux/centos/gpg"
 
 - name: Add repository on Debian
-  when:
-    - ansible_os_family == 'Debian'
-    - docker_configure
+  when: ansible_os_family == 'Debian'
   ansible.builtin.apt_repository:
     repo: "deb [arch=amd64] https://download.docker.com/linux/debian {{ ansible_distribution_release }} stable"
     state: present
 
 - name: Update apt cache on Debian
-  when:
-    - ansible_os_family == 'Debian'
-    - docker_configure
+  when: ansible_os_family == 'Debian'
   ansible.builtin.apt:
     update_cache: true
 
 - name: Update dnf cache on RedHat
-  when:
-    - ansible_os_family == 'RedHat'
-    - docker_configure
+  when: ansible_os_family == 'RedHat'
   ansible.builtin.dnf:
     update_cache: true
 
 - name: Install Docker
-  when: docker_configure
   notify: "Start docker service"
   ansible.builtin.package:
     name:
