@@ -32,6 +32,7 @@ ansible-playbook -bK -u someusername -i 192.168.0.100, playbook.yml
 - Configure SELinux
 - Create swapfile
 - Install Docker
+- Install Tailscale
 
 ## Configuration
 Variables for configuration are provided in vars/main.yml.
@@ -95,4 +96,9 @@ grub_timeout: "1"
 Install the docker repository and package
 ```
 docker_configure: "true"
+```
+
+Install the tailscale repository and package. After this, a prompt to enter an auth key will appear.
+```
+tailscale_configure: "true"
 ```
