@@ -75,3 +75,28 @@
 - name: Start tailscale with authkey
   when: auth_required
   ansible.builtin.command: "tailscale up --authkey {{ authkey.user_input }}"
+
+- name: Enable masquerading on RedHat
+  when: ansible_os_family == 'RedHat' and tailscale_exit_node
+  ansible.posix.firewalld:
+    masquerade: true
+    state: enabled
+    permanent: true
+
+- name: Enable IPv4 forwarding
+  when: tailscale_exit_node
+  ansible.posix.sysctl:
+    name: net.ipv4.ip_forward
+    value: '1'
+    state: present
+
+- name: Enable IPv6 forwarding
+  when: tailscale_exit_node
+  ansible.posix.sysctl:
+    name: net.ipv6.conf.all.forwarding
+    value: '1'
+    state: present
+
+- name: Start tailscale as an exit-node
+  when: tailscale_exit_node
+  ansible.builtin.command: "tailscale up --advertise-exit-node"

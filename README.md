@@ -98,7 +98,8 @@ Install the docker repository and package
 docker_configure: "true"
 ```
 
-Install the tailscale repository and package. After this, a prompt to enter an auth key will appear.
+Install the tailscale repository and package. After this, a prompt to enter an auth key will appear. Tailscale can be configured to advertise as an exit node with the option below
 ```
 tailscale_configure: "true"
+tailscale_exit_node: "true"
 ```
